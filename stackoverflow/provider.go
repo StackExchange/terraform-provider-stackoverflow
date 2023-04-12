@@ -34,11 +34,13 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
+			"stackoverflow_filter":   resourceFilter(),
 			"stackoverflow_article":  resourceArticle(),
 			"stackoverflow_question": resourceQuestion(),
 			"stackoverflow_answer":   resourceAnswer(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			"stackoverflow_filter":   dataFilter(),
 			"stackoverflow_article":  dataArticle(),
 			"stackoverflow_question": dataQuestion(),
 			"stackoverflow_answer":   dataAnswer(),

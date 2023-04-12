@@ -33,6 +33,23 @@ func NewClient(baseURL *string, teamName *string, accessToken *string) *Client {
 	return &c
 }
 
+func (c *Client) doPublicRequest(req *http.Request) ([]byte, error) {
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
+	}
+
+	return body, err
+}
+
 func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 	req.Header.Set("X-API-Access-Token", c.AccessToken)
 

@@ -22,14 +22,14 @@ func resourceArticle() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"title": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
 			"body_markdown": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
+			},
+			"filter": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 			"tags": {
 				Type:     schema.TypeList,
@@ -37,6 +37,10 @@ func resourceArticle() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"title": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -56,7 +60,7 @@ func resourceArticleCreate(ctx context.Context, d *schema.ResourceData, meta int
 		BodyMarkdown: d.Get("body_markdown").(string),
 		Title:        d.Get("title").(string),
 		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
-		Filter:       "omhz)aiL)ei3-sat(rZKVugTgq0f6)", //"!2oF_R8n-Ln(vwVra-FZ1DIV*iJEU3e_yLcG*k1oG5P",
+		Filter:       d.Get("filter").(string),
 	}
 
 	newArticle, err := client.CreateArticle(article)
@@ -73,11 +77,12 @@ func resourceArticleRead(ctx context.Context, d *schema.ResourceData, meta inter
 	client := meta.(*so.Client)
 	var diags diag.Diagnostics
 	articleID, err := strconv.Atoi(d.Id())
+	filter := d.Get("filter").(string)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	articleIDs := []int{articleID}
-	articles, err := client.GetArticles(&articleIDs)
+	articles, err := client.GetArticles(&articleIDs, &filter)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -118,7 +123,7 @@ func resourceArticleUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		BodyMarkdown: d.Get("body_markdown").(string),
 		Title:        d.Get("title").(string),
 		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
-		Filter:       "omhz)aiL)ei3-sat(rZKVugTgq0f6)", //"!2oF_R8n-Ln(vwVra-FZ1DIV*iJEU3e_yLcG*k1oG5P",
+		Filter:       d.Get("filter").(string),
 	}
 
 	_, err2 := client.UpdateArticle(article)
@@ -135,12 +140,12 @@ func resourceArticleDelete(ctx context.Context, d *schema.ResourceData, meta int
 	var diags diag.Diagnostics
 
 	articleID, err := strconv.Atoi(d.Id())
-
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	filter := d.Get("filter").(string)
 
-	err2 := client.DeleteArticle(articleID)
+	err2 := client.DeleteArticle(articleID, &filter)
 
 	if err2 != nil {
 		return diag.FromErr(err2)

@@ -18,11 +18,11 @@ func resourceAnswer() *schema.Resource {
 		UpdateContext: resourceAnswerUpdate,
 		DeleteContext: resourceAnswerDelete,
 		Schema: map[string]*schema.Schema{
-			"title": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"body_markdown": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"filter": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -36,6 +36,10 @@ func resourceAnswer() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"title": {
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -55,7 +59,7 @@ func resourceAnswerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		QuestionID:   d.Get("question_id").(int),
 		Title:        d.Get("title").(string),
 		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
-		Filter:       "omhz)aiL)ei3-sat(rZKVugTgq0f6)", //"!2oF_R8n-Ln(vwVra-FZ1DIV*iJEU3e_yLcG*k1oG5P",
+		Filter:       d.Get("filter").(string),
 	}
 
 	newAnswer, err := client.CreateAnswer(answer)
@@ -72,11 +76,12 @@ func resourceAnswerRead(ctx context.Context, d *schema.ResourceData, meta interf
 	client := meta.(*so.Client)
 	var diags diag.Diagnostics
 	answerID, err := strconv.Atoi(d.Id())
+	filter := d.Get("filter").(string)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	answerIDs := []int{answerID}
-	answers, err := client.GetAnswers(&answerIDs)
+	answers, err := client.GetAnswers(&answerIDs, &filter)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -117,7 +122,7 @@ func resourceAnswerUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		QuestionID:   d.Get("question_id").(int),
 		Title:        d.Get("title").(string),
 		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
-		Filter:       "omhz)aiL)ei3-sat(rZKVugTgq0f6)", //"!2oF_R8n-Ln(vwVra-FZ1DIV*iJEU3e_yLcG*k1oG5P",
+		Filter:       d.Get("filter").(string),
 	}
 
 	_, err2 := client.UpdateAnswer(answer)
@@ -134,12 +139,13 @@ func resourceAnswerDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	var diags diag.Diagnostics
 
 	answerID, err := strconv.Atoi(d.Id())
+	filter := d.Get("filter").(string)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err2 := client.DeleteAnswer(answerID)
+	err2 := client.DeleteAnswer(answerID, &filter)
 
 	if err2 != nil {
 		return diag.FromErr(err2)

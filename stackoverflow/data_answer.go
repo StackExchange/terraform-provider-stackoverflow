@@ -15,24 +15,13 @@ func dataAnswer() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataAnswerRead,
 		Schema: map[string]*schema.Schema{
-			"title": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"body_markdown": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"question_id": {
+			"answer_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"tags": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+			"filter": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 		},
 	}
@@ -43,14 +32,11 @@ func dataAnswerRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
-
-	answerID, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	answerID := d.Get("answer_id").(int)
+	filter := d.Get("filter").(string)
 	answerIDs := []int{answerID}
 
-	answers, err := c.GetAnswers(&answerIDs)
+	answers, err := c.GetAnswers(&answerIDs, &filter)
 	if err != nil {
 		return diag.FromErr(err)
 	}

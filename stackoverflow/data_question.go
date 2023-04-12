@@ -15,20 +15,13 @@ func dataQuestion() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataQuestionRead,
 		Schema: map[string]*schema.Schema{
-			"title": {
+			"filter": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"body_markdown": {
-				Type:     schema.TypeString,
+			"question_id": {
+				Type:     schema.TypeInt,
 				Required: true,
-			},
-			"tags": {
-				Type:     schema.TypeList,
-				Required: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
 			},
 		},
 	}
@@ -40,13 +33,11 @@ func dataQuestionRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	questionID, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	questionID := d.Get("question_id").(int)
+	filter := d.Get("filter").(string)
 	questionIDs := []int{questionID}
 
-	questions, err := c.GetQuestions(&questionIDs)
+	questions, err := c.GetQuestions(&questionIDs, &filter)
 	if err != nil {
 		return diag.FromErr(err)
 	}
