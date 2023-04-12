@@ -15,25 +15,13 @@ func dataArticle() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataArticleRead,
 		Schema: map[string]*schema.Schema{
-			"article_type": {
-				Type:     schema.TypeString,
+			"article_id": {
+				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"title": {
+			"filter": {
 				Type:     schema.TypeString,
 				Required: true,
-			},
-			"body_markdown": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "",
-			},
-			"tags": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
 			},
 		},
 	}
@@ -45,13 +33,11 @@ func dataArticleRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	articleID, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	articleID := d.Get("article_id").(int)
+	filter := d.Get("filter").(string)
 	articleIDs := []int{articleID}
 
-	articles, err := c.GetArticles(&articleIDs)
+	articles, err := c.GetArticles(&articleIDs, &filter)
 	if err != nil {
 		return diag.FromErr(err)
 	}

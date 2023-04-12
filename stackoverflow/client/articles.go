@@ -11,13 +11,13 @@ import (
 	"strings"
 )
 
-func (c *Client) GetArticles(articleIDs *[]int) (*[]Article, error) {
+func (c *Client) GetArticles(articleIDs *[]int, filter *string) (*[]Article, error) {
 	ids := make([]string, len(*articleIDs))
 	for i, articleID := range *articleIDs {
 		ids[i] = strconv.Itoa(articleID)
 	}
-	log.Printf("%s/%s?team=%s&order=desc&sort=creation&filter=omhz)aiL)ei3-sat(rZKVugTgq0f6)", "articles", strings.Join(ids, ";"), c.TeamName)
-	route := fmt.Sprintf("%s/%s?team=%s&order=desc&sort=creation&filter=omhz)aiL)ei3-sat(rZKVugTgq0f6)", "articles", strings.Join(ids, ";"), c.TeamName)
+	log.Printf("%s/%s?team=%s&order=desc&sort=creation&filter=%s", "articles", strings.Join(ids, ";"), c.TeamName, *filter)
+	route := fmt.Sprintf("%s/%s?team=%s&order=desc&sort=creation&filter=%s", "articles", strings.Join(ids, ";"), c.TeamName, *filter)
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", c.BaseURL, route), nil)
 	if err != nil {
 		return nil, err
@@ -112,8 +112,8 @@ func (c *Client) UpdateArticle(article *Article) (*Article, error) {
 	return &newArticle, nil
 }
 
-func (c *Client) DeleteArticle(articleId int) error {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s?team=%s&filter=omhz)aiL)ei3-sat(rZKVugTgq0f6)", c.BaseURL, "articles/", strconv.Itoa(articleId), "/delete", c.TeamName), nil)
+func (c *Client) DeleteArticle(articleId int, filter *string) error {
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s?team=%s&filter=%s", c.BaseURL, "articles/", strconv.Itoa(articleId), "/delete", c.TeamName, *filter), nil)
 	if err != nil {
 		return err
 	}

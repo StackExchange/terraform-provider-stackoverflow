@@ -11,13 +11,13 @@ import (
 	"strings"
 )
 
-func (c *Client) GetAnswers(answerIDs *[]int) (*[]Answer, error) {
+func (c *Client) GetAnswers(answerIDs *[]int, filter *string) (*[]Answer, error) {
 	ids := make([]string, len(*answerIDs))
 	for i, answerID := range *answerIDs {
 		ids[i] = strconv.Itoa(answerID)
 	}
-	log.Printf("%s/%s?team=%s&order=desc&sort=creation&filter=omhz)aiL)ei3-sat(rZKVugTgq0f6)", "answers", strings.Join(ids, ";"), c.TeamName)
-	route := fmt.Sprintf("%s/%s?team=%s&order=desc&sort=creation&filter=omhz)aiL)ei3-sat(rZKVugTgq0f6)", "answers", strings.Join(ids, ";"), c.TeamName)
+	log.Printf("%s/%s?team=%s&order=desc&sort=creation&filter=%s", "answers", strings.Join(ids, ";"), c.TeamName, *filter)
+	route := fmt.Sprintf("%s/%s?team=%s&order=desc&sort=creation&filter=%s", "answers", strings.Join(ids, ";"), c.TeamName, *filter)
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", c.BaseURL, route), nil)
 	if err != nil {
 		return nil, err
@@ -97,8 +97,8 @@ func (c *Client) UpdateAnswer(answer *Answer) (*Answer, error) {
 	return &newAnswer, nil
 }
 
-func (c *Client) DeleteAnswer(answerId int) error {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s?team=%s&filter=omhz)aiL)ei3-sat(rZKVugTgq0f6)", c.BaseURL, "answers/", strconv.Itoa(answerId), "/delete", c.TeamName), nil)
+func (c *Client) DeleteAnswer(answerId int, filter *string) error {
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s?team=%s&filter=%s", c.BaseURL, "answers/", strconv.Itoa(answerId), "/delete", c.TeamName, *filter), nil)
 	if err != nil {
 		return err
 	}

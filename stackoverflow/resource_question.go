@@ -50,7 +50,7 @@ func resourceQuestionCreate(ctx context.Context, d *schema.ResourceData, meta in
 		BodyMarkdown: d.Get("body_markdown").(string),
 		Title:        d.Get("title").(string),
 		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
-		Filter:       "omhz)aiL)ei3-sat(rZKVugTgq0f6)", //"!2oF_R8n-Ln(vwVra-FZ1DIV*iJEU3e_yLcG*k1oG5P",
+		Filter:       d.Get("filter").(string),
 	}
 
 	newQuestion, err := client.CreateQuestion(question)
@@ -71,7 +71,8 @@ func resourceQuestionRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 	questionIDs := []int{questionID}
-	questions, err := client.GetQuestions(&questionIDs)
+	filter := d.Get("filter").(string)
+	questions, err := client.GetQuestions(&questionIDs, &filter)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -110,7 +111,7 @@ func resourceQuestionUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		BodyMarkdown: d.Get("body_markdown").(string),
 		Title:        d.Get("title").(string),
 		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
-		Filter:       "omhz)aiL)ei3-sat(rZKVugTgq0f6)", //"!2oF_R8n-Ln(vwVra-FZ1DIV*iJEU3e_yLcG*k1oG5P",
+		Filter:       d.Get("filter").(string),
 	}
 
 	_, err2 := client.UpdateQuestion(question)
@@ -131,8 +132,9 @@ func resourceQuestionDelete(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	filter := d.Get("filter").(string)
 
-	err2 := client.DeleteQuestion(questionID)
+	err2 := client.DeleteQuestion(questionID, &filter)
 
 	if err2 != nil {
 		return diag.FromErr(err2)
