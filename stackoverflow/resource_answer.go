@@ -58,7 +58,7 @@ func resourceAnswerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		BodyMarkdown: d.Get("body_markdown").(string),
 		QuestionID:   d.Get("question_id").(int),
 		Title:        d.Get("title").(string),
-		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
+		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
 		Filter:       d.Get("filter").(string),
 	}
 
@@ -100,7 +100,7 @@ func resourceAnswerRead(ctx context.Context, d *schema.ResourceData, meta interf
 	d.Set("body_markdown", answer.BodyMarkdown)
 	d.Set("question_id", answer.QuestionID)
 	d.Set("title", answer.Title)
-	d.Set("tags", answer.Tags)
+	d.Set("tags", ignoreDefaultTags(client.DefaultTags, answer.Tags, expandTagsToArray(d.Get("tags").([]interface{}))))
 
 	return diags
 }
@@ -121,7 +121,7 @@ func resourceAnswerUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		BodyMarkdown: d.Get("body_markdown").(string),
 		QuestionID:   d.Get("question_id").(int),
 		Title:        d.Get("title").(string),
-		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
+		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
 		Filter:       d.Get("filter").(string),
 	}
 

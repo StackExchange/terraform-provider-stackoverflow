@@ -32,6 +32,13 @@ func Provider() *schema.Provider {
 				Description: "The base URL for the Stack Overflow API",
 				Default:     "https://api.stackoverflowteams.com/2.3/",
 			},
+			"default_tags": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"stackoverflow_filter":   resourceFilter(),
@@ -56,6 +63,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 
 	var diags diag.Diagnostics
 	client := so.NewClient(&baseURL, &teamName, &accessToken)
-
+	client.DefaultTags = expandTagsToArray(d.Get("default_tags").([]interface{}))
 	return client, diags
 }
