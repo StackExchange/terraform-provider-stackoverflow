@@ -14,7 +14,7 @@ Get-ChildItem -Path $Path -Filter "*.md" | ForEach-Object {
                 title = $_.BaseName
                 body_markdown = "`${file(`"$($_.FullName -replace "\\", "/")`")}"
                 tags = $Tags
-                filter = $FilterResource
+                filter = "`${$FilterResource}"
             }
         }
     }
