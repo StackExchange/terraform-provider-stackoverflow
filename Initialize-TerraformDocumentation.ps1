@@ -5,6 +5,7 @@ param(
     [string] $FilterResource
 )
 
+$Pattern = "[^a-zA-Z0-9]"
 $ResourcesJson = "{"
 Get-ChildItem -Path $Path -Filter "*.md" | ForEach-Object {
     $Resource = @{
