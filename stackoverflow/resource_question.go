@@ -28,7 +28,7 @@ func resourceQuestion() *schema.Resource {
 			},
 			"tags": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -49,7 +49,7 @@ func resourceQuestionCreate(ctx context.Context, d *schema.ResourceData, meta in
 	question := &so.Question{
 		BodyMarkdown: d.Get("body_markdown").(string),
 		Title:        d.Get("title").(string),
-		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
+		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
 		Filter:       d.Get("filter").(string),
 	}
 
@@ -90,7 +90,7 @@ func resourceQuestionRead(ctx context.Context, d *schema.ResourceData, meta inte
 	d.SetId(strconv.Itoa(question.ID))
 	d.Set("body_markdown", question.BodyMarkdown)
 	d.Set("title", question.Title)
-	d.Set("tags", question.Tags)
+	d.Set("tags", ignoreDefaultTags(client.DefaultTags, question.Tags, expandTagsToArray(d.Get("tags").([]interface{}))))
 
 	return diags
 }
@@ -110,7 +110,7 @@ func resourceQuestionUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		ID:           questionID,
 		BodyMarkdown: d.Get("body_markdown").(string),
 		Title:        d.Get("title").(string),
-		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
+		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
 		Filter:       d.Get("filter").(string),
 	}
 

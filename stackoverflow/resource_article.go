@@ -59,7 +59,7 @@ func resourceArticleCreate(ctx context.Context, d *schema.ResourceData, meta int
 		ArticleType:  d.Get("article_type").(string),
 		BodyMarkdown: d.Get("body_markdown").(string),
 		Title:        d.Get("title").(string),
-		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
+		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
 		Filter:       d.Get("filter").(string),
 	}
 
@@ -101,7 +101,7 @@ func resourceArticleRead(ctx context.Context, d *schema.ResourceData, meta inter
 	d.Set("article_type", article.ArticleType)
 	d.Set("body_markdown", article.BodyMarkdown)
 	d.Set("title", article.Title)
-	d.Set("tags", article.Tags)
+	d.Set("tags", ignoreDefaultTags(client.DefaultTags, article.Tags, expandTagsToArray(d.Get("tags").([]interface{}))))
 
 	return diags
 }
@@ -122,7 +122,7 @@ func resourceArticleUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		ArticleType:  d.Get("article_type").(string),
 		BodyMarkdown: d.Get("body_markdown").(string),
 		Title:        d.Get("title").(string),
-		Tags:         expandTagsToArray(d.Get("tags").([]interface{})),
+		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
 		Filter:       d.Get("filter").(string),
 	}
 

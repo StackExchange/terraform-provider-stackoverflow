@@ -14,6 +14,7 @@ type Client struct {
 	TeamName    string
 	AccessToken string
 	HTTPClient  *http.Client
+	DefaultTags []string
 }
 
 func NewClient(baseURL *string, teamName *string, accessToken *string) *Client {
@@ -24,6 +25,7 @@ func NewClient(baseURL *string, teamName *string, accessToken *string) *Client {
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
+		DefaultTags: []string{},
 	}
 
 	if baseURL != nil {
