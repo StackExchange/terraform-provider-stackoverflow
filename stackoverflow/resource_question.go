@@ -18,11 +18,11 @@ func resourceQuestion() *schema.Resource {
 		UpdateContext: resourceQuestionUpdate,
 		DeleteContext: resourceQuestionDelete,
 		Schema: map[string]*schema.Schema{
-			"title": {
+			"body_markdown": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"body_markdown": {
+			"filter": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -32,6 +32,10 @@ func resourceQuestion() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"title": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 		},
 		Importer: &schema.ResourceImporter{

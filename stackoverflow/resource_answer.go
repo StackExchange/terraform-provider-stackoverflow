@@ -30,17 +30,6 @@ func resourceAnswer() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"tags": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"title": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -57,8 +46,6 @@ func resourceAnswerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	answer := &so.Answer{
 		BodyMarkdown: d.Get("body_markdown").(string),
 		QuestionID:   d.Get("question_id").(int),
-		Title:        d.Get("title").(string),
-		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
 		Filter:       d.Get("filter").(string),
 	}
 
@@ -99,8 +86,6 @@ func resourceAnswerRead(ctx context.Context, d *schema.ResourceData, meta interf
 	d.SetId(strconv.Itoa(answer.ID))
 	d.Set("body_markdown", answer.BodyMarkdown)
 	d.Set("question_id", answer.QuestionID)
-	d.Set("title", answer.Title)
-	d.Set("tags", ignoreDefaultTags(client.DefaultTags, answer.Tags, expandTagsToArray(d.Get("tags").([]interface{}))))
 
 	return diags
 }
@@ -120,8 +105,6 @@ func resourceAnswerUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		ID:           answerID,
 		BodyMarkdown: d.Get("body_markdown").(string),
 		QuestionID:   d.Get("question_id").(int),
-		Title:        d.Get("title").(string),
-		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
 		Filter:       d.Get("filter").(string),
 	}
 
