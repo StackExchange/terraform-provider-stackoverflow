@@ -122,13 +122,12 @@ func resourceAnswerDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	var diags diag.Diagnostics
 
 	answerID, err := strconv.Atoi(d.Id())
-	filter := d.Get("filter").(string)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err2 := client.DeleteAnswer(answerID, &filter)
+	err2 := client.DeleteAnswer(answerID)
 
 	if err2 != nil {
 		return diag.FromErr(err2)

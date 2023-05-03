@@ -1,9 +1,13 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -67,4 +71,100 @@ func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 	}
 
 	return body, err
+}
+
+func (c *Client) get(route string, identifiers *[]int, filter *string) (*[]byte, error) {
+	ids := make([]string, len(*identifiers))
+	for i, id := range *identifiers {
+		ids[i] = strconv.Itoa(id)
+	}
+	url := fmt.Sprintf("%s%s/%s?team=%s&filter=%s", c.BaseURL, route, strings.Join(ids, ";"), c.TeamName, *filter)
+	log.Print(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := new(strings.Builder)
+	io.Copy(buf, strings.NewReader((string(body))))
+	log.Printf("Response body: %s", buf.String())
+
+	return &body, nil
+}
+
+func (c *Client) create(route string, formData *string) (*[]byte, error) {
+	url := fmt.Sprintf("%s%s?team=%s", c.BaseURL, route, c.TeamName)
+	log.Print(url)
+	req, err := http.NewRequest("POST", url, strings.NewReader(*formData))
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := new(strings.Builder)
+	io.Copy(buf, strings.NewReader((string(body))))
+	log.Printf("Response body: %s", buf.String())
+
+	return &body, nil
+}
+
+func (c *Client) update(route string, formData *string) (*[]byte, error) {
+	url := fmt.Sprintf("%s%s?team=%s", c.BaseURL, route, c.TeamName)
+	log.Print(url)
+	req, err := http.NewRequest("POST", url, strings.NewReader(*formData))
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := new(strings.Builder)
+	io.Copy(buf, strings.NewReader((string(body))))
+	log.Printf("Response body: %s", buf.String())
+
+	return &body, nil
+}
+
+func (c *Client) delete(route string) error {
+	url := fmt.Sprintf("%s%s?team=%s", c.BaseURL, route, c.TeamName)
+	log.Print(url)
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return err
+	}
+
+	body, err2 := c.doRequest(req)
+	if err2 != nil {
+		return err2
+	}
+
+	buf := new(strings.Builder)
+	io.Copy(buf, strings.NewReader((string(body))))
+	log.Printf("Response body: %s", buf.String())
+
+	return nil
+}
+
+func UnwrapResponseItems[T Answer | Article | Filter | Question](response *[]byte) (*[]T, error) {
+	responseWrapper := Wrapper[T]{}
+	err := json.Unmarshal(*response, &responseWrapper)
+	if err != nil {
+		return nil, err
+	}
+
+	items := responseWrapper.Items
+
+	return &items, nil
 }

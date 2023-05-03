@@ -1,9 +1,7 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -11,9 +9,9 @@ import (
 )
 
 func (c *Client) GetFilters(filterIDs *[]string) (*[]Filter, error) {
-	log.Printf("%s/%s", "filters", strings.Join(*filterIDs, ";"))
-	route := fmt.Sprintf("%s/%s?key=", "filters", strings.Join(*filterIDs, ";"))
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", c.BaseURL, route), nil)
+	url := fmt.Sprintf("%s%s/%s?key=", c.BaseURL, "filters", strings.Join(*filterIDs, ";"))
+	log.Print(url)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -23,20 +21,19 @@ func (c *Client) GetFilters(filterIDs *[]string) (*[]Filter, error) {
 		return nil, err
 	}
 
-	responseWrapper := Wrapper[Filter]{}
-	err = json.Unmarshal(body, &responseWrapper)
+	filters, err := UnwrapResponseItems[Filter](&body)
 	if err != nil {
 		return nil, err
 	}
 
-	filters := responseWrapper.Items
-
-	return &filters, nil
+	return filters, nil
 }
 
 func (c *Client) CreateFilter(filter *Filter) (*Filter, error) {
+	url := fmt.Sprintf("%s%s", c.BaseURL, "filters/create?key=")
+	log.Print(url)
 	formData := GenerateFilterFormData(filter)
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", c.BaseURL, "filters/create?key="), strings.NewReader(formData))
+	req, err := http.NewRequest("POST", url, strings.NewReader(*formData))
 	if err != nil {
 		return nil, err
 	}
@@ -46,28 +43,25 @@ func (c *Client) CreateFilter(filter *Filter) (*Filter, error) {
 		return nil, err
 	}
 
-	buf := new(strings.Builder)
-	io.Copy(buf, strings.NewReader((string(body))))
-	log.Printf("Response body: %s", buf.String())
-
-	responseWrapper := Wrapper[Filter]{}
-	err = json.Unmarshal(body, &responseWrapper)
+	filters, err := UnwrapResponseItems[Filter](&body)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(responseWrapper.Items) != 1 {
-		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(responseWrapper.Items))
+	if len(*filters) != 1 {
+		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(*filters))
 	}
 
-	newFilter := responseWrapper.Items[0]
+	newFilter := (*filters)[0]
 
 	return &newFilter, nil
 }
 
 func (c *Client) UpdateFilter(filter *Filter) (*Filter, error) {
+	url := fmt.Sprintf("%s%s%s%s", c.BaseURL, "filters/", filter.ID, "/edit")
+	log.Print(url)
 	formData := GenerateFilterFormData(filter)
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s", c.BaseURL, "filters/", filter.ID, "/edit"), strings.NewReader(formData))
+	req, err := http.NewRequest("POST", url, strings.NewReader(*formData))
 	if err != nil {
 		return nil, err
 	}
@@ -77,23 +71,24 @@ func (c *Client) UpdateFilter(filter *Filter) (*Filter, error) {
 		return nil, err
 	}
 
-	responseWrapper := Wrapper[Filter]{}
-	err = json.Unmarshal(body, &responseWrapper)
+	filters, err := UnwrapResponseItems[Filter](&body)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(responseWrapper.Items) != 1 {
-		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(responseWrapper.Items))
+	if len(*filters) != 1 {
+		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(*filters))
 	}
 
-	newFilter := responseWrapper.Items[0]
+	newFilter := (*filters)[0]
 
 	return &newFilter, nil
 }
 
 func (c *Client) DeleteFilter(filterId string) error {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s", c.BaseURL, "filters/", filterId, "/delete"), nil)
+	url := fmt.Sprintf("%s%s%s%s", c.BaseURL, "filters/", filterId, "/delete")
+	log.Print(url)
+	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return err
 	}
@@ -106,8 +101,8 @@ func (c *Client) DeleteFilter(filterId string) error {
 	return nil
 }
 
-func GenerateFilterFormData(filter *Filter) string {
+func GenerateFilterFormData(filter *Filter) *string {
 	formData := fmt.Sprintf("include=%s&exclude=%s&unsafe=%t", url.QueryEscape(strings.Join(filter.Include, ";")), url.QueryEscape(strings.Join(filter.Exclude, ";")), filter.Unsafe)
 	log.Printf("Form data: %s", formData)
-	return formData
+	return &formData
 }

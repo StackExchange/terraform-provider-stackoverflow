@@ -1,124 +1,82 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"net/url"
-	"strconv"
-	"strings"
 )
 
 func (c *Client) GetAnswers(answerIDs *[]int, filter *string) (*[]Answer, error) {
-	ids := make([]string, len(*answerIDs))
-	for i, answerID := range *answerIDs {
-		ids[i] = strconv.Itoa(answerID)
-	}
-	log.Printf("%s/%s?team=%s&order=desc&sort=creation&filter=%s", "answers", strings.Join(ids, ";"), c.TeamName, *filter)
-	route := fmt.Sprintf("%s/%s?team=%s&order=desc&sort=creation&filter=%s", "answers", strings.Join(ids, ";"), c.TeamName, *filter)
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", c.BaseURL, route), nil)
+	response, err := c.get("answers", answerIDs, filter)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	answers, err := UnwrapResponseItems[Answer](response)
 	if err != nil {
 		return nil, err
 	}
 
-	responseWrapper := Wrapper[Answer]{}
-	err = json.Unmarshal(body, &responseWrapper)
-	if err != nil {
-		return nil, err
-	}
-
-	answers := responseWrapper.Items
-
-	return &answers, nil
+	return answers, nil
 }
 
 func (c *Client) CreateAnswer(answer *Answer) (*Answer, error) {
-	formData := GenerateAnswerFormData(answer, true)
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s?team=%s", c.BaseURL, "questions/", strconv.Itoa(answer.QuestionID), "/answers/add", c.TeamName), strings.NewReader(formData))
+	response, err := c.create(fmt.Sprintf("%s%d%s", "questions/", answer.QuestionID, "/answers/add"), GenerateAnswerFormData(answer, true))
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	answers, err := UnwrapResponseItems[Answer](response)
 	if err != nil {
 		return nil, err
 	}
 
-	buf := new(strings.Builder)
-	io.Copy(buf, strings.NewReader((string(body))))
-	log.Printf("Response body: %s", buf.String())
-
-	responseWrapper := Wrapper[Answer]{}
-	err = json.Unmarshal(body, &responseWrapper)
-	if err != nil {
-		return nil, err
+	if len(*answers) != 1 {
+		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(*answers))
 	}
 
-	if len(responseWrapper.Items) != 1 {
-		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(responseWrapper.Items))
-	}
-
-	newAnswer := responseWrapper.Items[0]
+	newAnswer := (*answers)[0]
 
 	return &newAnswer, nil
 }
 
 func (c *Client) UpdateAnswer(answer *Answer) (*Answer, error) {
-	formData := GenerateAnswerFormData(answer, false)
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s?team=%s", c.BaseURL, "answers/", strconv.Itoa(answer.ID), "/edit", c.TeamName), strings.NewReader(formData))
+	response, err := c.update(fmt.Sprintf("%s%d%s", "answers/", answer.ID, "/edit"), GenerateAnswerFormData(answer, false))
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	answers, err := UnwrapResponseItems[Answer](response)
 	if err != nil {
 		return nil, err
 	}
 
-	responseWrapper := Wrapper[Answer]{}
-	err = json.Unmarshal(body, &responseWrapper)
-	if err != nil {
-		return nil, err
+	if len(*answers) != 1 {
+		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(*answers))
 	}
 
-	if len(responseWrapper.Items) != 1 {
-		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(responseWrapper.Items))
-	}
-
-	newAnswer := responseWrapper.Items[0]
+	newAnswer := (*answers)[0]
 
 	return &newAnswer, nil
 }
 
-func (c *Client) DeleteAnswer(answerId int, filter *string) error {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s%s%s?team=%s&filter=%s", c.BaseURL, "answers/", strconv.Itoa(answerId), "/delete", c.TeamName, *filter), nil)
+func (c *Client) DeleteAnswer(answerId int) error {
+	err := c.delete(fmt.Sprintf("%s%d%s", "answers/", answerId, "/delete"))
 	if err != nil {
-		return err
-	}
-
-	_, err2 := c.doRequest(req)
-	if err2 != nil {
 		return err
 	}
 
 	return nil
 }
 
-func GenerateAnswerFormData(answer *Answer, isCreate bool) string {
+func GenerateAnswerFormData(answer *Answer, isCreate bool) *string {
+	formData := ""
 	if isCreate {
-		formData := fmt.Sprintf("id=%d&body=%s&preview=%t&filter=%s", answer.QuestionID, url.QueryEscape(answer.BodyMarkdown), answer.Preview, answer.Filter)
-		log.Printf("Form data: %s", formData)
-		return formData
+		formData = fmt.Sprintf("id=%d&body=%s&preview=%t&filter=%s", answer.QuestionID, url.QueryEscape(answer.BodyMarkdown), answer.Preview, answer.Filter)
+	} else {
+		formData = fmt.Sprintf("id=%d&body=%s&preview=%t&filter=%s", answer.ID, url.QueryEscape(answer.BodyMarkdown), answer.Preview, answer.Filter)
 	}
 
-	formData := fmt.Sprintf("id=%d&body=%s&preview=%t&filter=%s", answer.ID, url.QueryEscape(answer.BodyMarkdown), answer.Preview, answer.Filter)
 	log.Printf("Form data: %s", formData)
-	return formData
+	return &formData
 }
