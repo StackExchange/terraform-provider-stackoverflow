@@ -143,9 +143,8 @@ func resourceArticleDelete(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	filter := d.Get("filter").(string)
 
-	err2 := client.DeleteArticle(articleID, &filter)
+	err2 := client.DeleteArticle(articleID)
 
 	if err2 != nil {
 		return diag.FromErr(err2)

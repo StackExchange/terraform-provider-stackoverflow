@@ -136,9 +136,8 @@ func resourceQuestionDelete(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	filter := d.Get("filter").(string)
 
-	err2 := client.DeleteQuestion(questionID, &filter)
+	err2 := client.DeleteQuestion(questionID)
 
 	if err2 != nil {
 		return diag.FromErr(err2)
