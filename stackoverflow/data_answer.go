@@ -16,12 +16,14 @@ func dataAnswer() *schema.Resource {
 		ReadContext: dataAnswerRead,
 		Schema: map[string]*schema.Schema{
 			"answer_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The identifier for the answer",
 			},
 			"filter": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The API filter to use",
 			},
 		},
 	}

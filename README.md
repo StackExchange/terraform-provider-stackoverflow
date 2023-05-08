@@ -1,47 +1,43 @@
-# Terraform Provider Stack Overflow
+# Terraform Provider for Stack Overflow
 
-Run the following command to build the provider
+The Terraform Provider for Stack Overflow is a Terraform plugin provider that allows you to manage questions, answers, and articles for your Stack Overflow for Teams.
 
-```powershell
-# Windows
-go build -o terraform-provider-stackoverflow.exe
-cp terraform-provider-stackoverflow.exe ~/go/bin
-```
+## Using the Provider
+---------------------
 
-Create a `terraform.rc` file in the %APPDATA% directory.
+To use a released version of the Terraform provider in your environment, run `terraform init` and Terraform will automatically install the provider from the Terraform Registry. To specify a particular provider version when installing released providers, see the [Terraform documentation on provider versioning](https://www.terraform.io/docs/configuration/providers.html#version-provider-versions).
 
-```powershell
-cd $env:APPDATA
-mk terraform.rc
-```
+## Example
+----------
 
-Add the following content to the `terraform.rc` file:
-
-```
-provider_installation {
-  dev_overrides {
-    "registry.terraform.io/hashicorp/stackoverflow" = "C:/Users/rbolhofer/go/bin"
-  }
-  direct {}
+```terraform
+provider "stackoverflow" {
+  team_name = "my-team-name"
+  access_token = "xxxx"
+  default_tags = ["terraform"]
 }
-```
 
-## Test sample configuration
-
-In a new directory, create a file named `main.tf` and add the following content:
-
-```
-resource "stackoverflow_article" "test_article" {
-  article_type = "knowledge-article"
-  title = "Test Article"
-  body_markdown = "# Hello World"
-  tags = ["test"]
+resource "stackoverflow_filter" "filter" {
 }
-```
 
-Then initialize and run Terraform:
+resource "stackoverflow_article" "article" {
+  article_type = "announcement"
+  title = "Terraform Provider for Stack Overflow is available!"
+  body_markdown = "Look for the Stack Overflow provider in the Terraform registry"
+  tags = ["example"]
+  filter = stackoverflow_filter.filter.id
+}
 
-```powershell
-terraform init
-terraform plan -out terraform.tfplan
+resource "stackoverflow_question" "question" {
+    title = "Stack Overflow Terraform Provider"
+    body_markdown = "What is the Terraform Provider for Stack Overflow?"
+    tags = ["example"]
+    filter = stackoverflow_filter.filter.id
+}
+
+resource "stackoverflow_answer" "answer" {
+    question_id = stackoverflow_question.question.id
+    body_markdown = "It is a Terraform plugin provider to manage resources in Stack Overflow for Teams"
+    filter = stackoverflow_filter.filter.id
+}
 ```

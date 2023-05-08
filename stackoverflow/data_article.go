@@ -16,12 +16,14 @@ func dataArticle() *schema.Resource {
 		ReadContext: dataArticleRead,
 		Schema: map[string]*schema.Schema{
 			"article_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The identifier for the article",
 			},
 			"filter": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The API filter to use",
 			},
 		},
 	}

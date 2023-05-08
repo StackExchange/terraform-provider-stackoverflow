@@ -16,12 +16,14 @@ func dataQuestion() *schema.Resource {
 		ReadContext: dataQuestionRead,
 		Schema: map[string]*schema.Schema{
 			"filter": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The API filter to use",
 			},
 			"question_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The identifier for the question",
 			},
 		},
 	}

@@ -19,12 +19,14 @@ func resourceQuestion() *schema.Resource {
 		DeleteContext: resourceQuestionDelete,
 		Schema: map[string]*schema.Schema{
 			"body_markdown": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The question content in Markdown format",
 			},
 			"filter": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The API filter to use",
 			},
 			"tags": {
 				Type:     schema.TypeList,
@@ -32,10 +34,12 @@ func resourceQuestion() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				Description: "The set of tags to be associated with the article",
 			},
 			"title": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The title of the article",
 			},
 		},
 		Importer: &schema.ResourceImporter{
