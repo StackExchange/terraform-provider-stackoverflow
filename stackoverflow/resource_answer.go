@@ -19,16 +19,19 @@ func resourceAnswer() *schema.Resource {
 		DeleteContext: resourceAnswerDelete,
 		Schema: map[string]*schema.Schema{
 			"body_markdown": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The answer content in Markdown format",
 			},
 			"filter": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The API filter to use",
 			},
 			"question_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The question identifier that this answer applies to",
 			},
 		},
 		Importer: &schema.ResourceImporter{

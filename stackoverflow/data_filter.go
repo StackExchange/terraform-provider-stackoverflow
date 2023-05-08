@@ -15,8 +15,9 @@ func dataFilter() *schema.Resource {
 		ReadContext: dataFilterRead,
 		Schema: map[string]*schema.Schema{
 			"filter": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The identifier for the filter",
 			},
 		},
 	}

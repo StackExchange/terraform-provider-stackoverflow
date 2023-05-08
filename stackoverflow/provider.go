@@ -33,8 +33,9 @@ func Provider() *schema.Provider {
 				Default:     "https://api.stackoverflowteams.com/2.3/",
 			},
 			"default_tags": {
-				Type:     schema.TypeList,
-				Optional: true,
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "A list of tags to automatically associate with any resources that support tags",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

@@ -7,6 +7,7 @@ import (
 
 	so "terraform-provider-stackoverflow/stackoverflow/client"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -19,17 +20,21 @@ func resourceArticle() *schema.Resource {
 		DeleteContext: resourceArticleDelete,
 		Schema: map[string]*schema.Schema{
 			"article_type": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "The type of article. Must be one of `knowledge-article`, `announcement`, `how-to-guide`, `policy`",
+				ValidateFunc: schema.SchemaValidateFunc(validation.StringInSlice([]string{"knowledge-article", "announcement", "how-to-guide", "policy"}, false)),
 			},
 			"body_markdown": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "",
+				Description: "The article content in Markdown format",
 			},
 			"filter": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The API filter to use",
 			},
 			"tags": {
 				Type:     schema.TypeList,
@@ -37,10 +42,12 @@ func resourceArticle() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				Description: "The set of tags to be associated with the article",
 			},
 			"title": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The title of the article",
 			},
 		},
 		Importer: &schema.ResourceImporter{
