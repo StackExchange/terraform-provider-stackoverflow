@@ -1,12 +1,12 @@
 package client
 
-type Answer struct {
-	ID           int      `json:"answer_id,omitempty"`
-	Accepted     bool     `json:"accepted"`
-	BodyMarkdown string   `json:"body_markdown"`
-	Preview      bool     `json:"preview"`
-	QuestionID   int      `json:"question_id"`
-	Title        string   `json:"title"`
-	Tags         []string `json:"tags"`
-	Filter       string   `json:"filter"`
+type Answer[T string | Tag] struct {
+	ID           int    `json:"id,omitempty"`
+	Accepted     bool   `json:"accepted"`
+	Body         string `json:"body"`
+	BodyMarkdown string `json:"bodyMarkdown"`
+	Preview      bool   `json:"preview"`
+	QuestionID   int    `json:"questionId"`
+	Title        string `json:"title"`
+	Tags         []T    `json:"tags"`
 }

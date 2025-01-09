@@ -13,7 +13,6 @@ The `article` data source allows for referencing an existing article in Stack Ov
 ```
 data "stackoverflow_article" "article" {
     article_id = 1
-    filter = "XXXX"
 }
 ```
 
@@ -23,10 +22,13 @@ data "stackoverflow_article" "article" {
 ### Required
 
 - `article_id` (Number) The identifier for the article
-- `filter` (String) The API filter to use
 
 ### Read-Only
 
+- `article_type` (String) The type of article. Must be one of `knowledge-article`, `announcement`, `how-to-guide`, `policy`
+- `body_markdown` (String) The article content in Markdown format
 - `id` (String) The ID of this resource.
+- `tags` (List of String) The set of tags to be associated with the article
+- `title` (String) The title of the article
 
 

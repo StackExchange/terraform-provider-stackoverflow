@@ -1,10 +1,10 @@
 package client
 
-type Article struct {
-	ID           int      `json:"article_id,omitempty"`
-	ArticleType  string   `json:"article_type"`
-	BodyMarkdown string   `json:"body_markdown"`
-	Title        string   `json:"title"`
-	Tags         []string `json:"tags"`
-	Filter       string   `json:"filter"`
+type Article[T string | Tag] struct {
+	ID           int    `json:"id,omitempty"`
+	ArticleType  string `json:"type"`
+	Body         string `json:"body"`
+	BodyMarkdown string `json:"bodyMarkdown"`
+	Title        string `json:"title"`
+	Tags         []T    `json:"tags"`
 }

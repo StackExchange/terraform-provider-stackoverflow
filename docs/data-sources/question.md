@@ -14,7 +14,6 @@ The `question` data source allows for referencing an existing question in Stack 
 
 ```
 data "stackoverflow_question" "question" {
-    filter = "XXXX"
     question_id = 1
 }
 ```
@@ -24,11 +23,13 @@ data "stackoverflow_question" "question" {
 
 ### Required
 
-- `filter` (String) The API filter to use
 - `question_id` (Number) The identifier for the question
 
 ### Read-Only
 
+- `body_markdown` (String) The question content in Markdown format
 - `id` (String) The ID of this resource.
+- `tags` (List of String) The set of tags to be associated with the article
+- `title` (String) The title of the article
 
 

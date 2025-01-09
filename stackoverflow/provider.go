@@ -17,41 +17,27 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("STACK_OVERFLOW_ACCESS_TOKEN", nil),
-				Description: "The Stack Overflow API access token",
-			},
-			"team_name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("STACK_OVERFLOW_TEAM", nil),
-				Description: "The Stack Overflow team name",
+				Description: "The Stack Overflow API access token. The `STACK_OVERFLOW_ACCESS_TOKEN` environment variable can be used instead.",
 			},
 			"base_url": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("STACK_OVERFLOW_API_URL", nil),
-				Description: "The base URL for the Stack Overflow API",
-				Default:     "https://api.stackoverflowteams.com/2.3/",
-			},
-			"default_tags": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: "A list of tags to automatically associate with any resources that support tags",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Description: "The base URL for the Stack Overflow API (must end with `/`). For Stack Overflow for Teams this is in the format `https://api.stackoverflowteams.com/v3/teams/{team}/` and for Stack Overflow Enterprise this is in one of the following formats `https://{name}.stackenterprise.co/api/v3/`, `https://{name}.stackenterprise.co/api/v3/teams/{team}/`, `https://{your-custom-domain}/api/v3/`, or `https://{your-custom-domain}/api/v3/teams/{team}/`. The `STACK_OVERFLOW_API_URL` environment variable can be used instead.",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"stackoverflow_filter":   resourceFilter(),
-			"stackoverflow_article":  resourceArticle(),
-			"stackoverflow_question": resourceQuestion(),
-			"stackoverflow_answer":   resourceAnswer(),
+			"stackoverflow_answer":     resourceAnswer(),
+			"stackoverflow_article":    resourceArticle(),
+			"stackoverflow_collection": resourceCollection(),
+			"stackoverflow_question":   resourceQuestion(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"stackoverflow_filter":   dataFilter(),
-			"stackoverflow_article":  dataArticle(),
-			"stackoverflow_question": dataQuestion(),
-			"stackoverflow_answer":   dataAnswer(),
+			"stackoverflow_answer":     dataAnswer(),
+			"stackoverflow_article":    dataArticle(),
+			"stackoverflow_collection": dataCollection(),
+			"stackoverflow_question":   dataQuestion(),
+			"stackoverflow_tag":        dataTag(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
@@ -59,11 +45,11 @@ func Provider() *schema.Provider {
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	accessToken := d.Get("access_token").(string)
-	teamName := d.Get("team_name").(string)
 	baseURL := d.Get("base_url").(string)
 
 	var diags diag.Diagnostics
-	client := so.NewClient(&baseURL, &teamName, &accessToken)
-	client.DefaultTags = expandTagsToArray(d.Get("default_tags").([]interface{}))
+	client := so.NewClient(&baseURL, &accessToken)
+	client.DefaultTags = convertToArray[string](d.Get("default_tags").([]interface{}))
+
 	return client, diags
 }

@@ -3,6 +3,7 @@ package stackoverflow
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 
 	so "terraform-provider-stackoverflow/stackoverflow/client"
@@ -22,23 +23,17 @@ func resourceArticle() *schema.Resource {
 			"article_type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "The type of article. Must be one of `knowledge-article`, `announcement`, `how-to-guide`, `policy`",
-				ValidateFunc: schema.SchemaValidateFunc(validation.StringInSlice([]string{"knowledge-article", "announcement", "how-to-guide", "policy"}, false)),
+				Description:  "The type of article. Must be one of `knowledgeArticle`, `announcement`, `howToGuide`, `policy`",
+				ValidateFunc: schema.SchemaValidateFunc(validation.StringInSlice([]string{"knowledgeArticle", "announcement", "howToGuide", "policy"}, false)),
 			},
 			"body_markdown": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "",
-				Description: "The article content in Markdown format",
-			},
-			"filter": {
-				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The API filter to use",
+				Description: "The article content in Markdown format",
 			},
 			"tags": {
 				Type:     schema.TypeList,
-				Optional: true,
+				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -62,12 +57,14 @@ func resourceArticleCreate(ctx context.Context, d *schema.ResourceData, meta int
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	article := &so.Article{
-		ArticleType:  d.Get("article_type").(string),
-		BodyMarkdown: d.Get("body_markdown").(string),
-		Title:        d.Get("title").(string),
-		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
-		Filter:       d.Get("filter").(string),
+	tags := convertToArray[string](d.Get("tags").([]interface{}))
+	sort.Strings(tags)
+
+	article := &so.Article[string]{
+		ArticleType: d.Get("article_type").(string),
+		Body:        d.Get("body_markdown").(string),
+		Title:       d.Get("title").(string),
+		Tags:        tags,
 	}
 
 	newArticle, err := client.CreateArticle(article)
@@ -84,31 +81,26 @@ func resourceArticleRead(ctx context.Context, d *schema.ResourceData, meta inter
 	client := meta.(*so.Client)
 	var diags diag.Diagnostics
 	articleID, err := strconv.Atoi(d.Id())
-	filter := d.Get("filter").(string)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	articleIDs := []int{articleID}
-	articles, err := client.GetArticles(&articleIDs, &filter)
+	article, err := client.GetArticle(&articleID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if len(*articles) < 1 {
+	if article == nil {
 		return diag.FromErr(fmt.Errorf("no article found matching identifier %d", articleID))
 	}
 
-	if len(*articles) > 1 {
-		return diag.FromErr(fmt.Errorf("found %d articles matching identifier %d", len(*articles), articleID))
-	}
-
-	article := (*articles)[0]
+	tags := selectTagNamesToArray(article.Tags)
+	sort.Strings(tags)
 
 	d.SetId(strconv.Itoa(article.ID))
 	d.Set("article_type", article.ArticleType)
 	d.Set("body_markdown", article.BodyMarkdown)
 	d.Set("title", article.Title)
-	d.Set("tags", ignoreDefaultTags(client.DefaultTags, article.Tags, expandTagsToArray(d.Get("tags").([]interface{}))))
+	d.Set("tags", tags)
 
 	return diags
 }
@@ -124,13 +116,15 @@ func resourceArticleUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	article := &so.Article{
-		ID:           articleID,
-		ArticleType:  d.Get("article_type").(string),
-		BodyMarkdown: d.Get("body_markdown").(string),
-		Title:        d.Get("title").(string),
-		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
-		Filter:       d.Get("filter").(string),
+	tags := convertToArray[string](d.Get("tags").([]interface{}))
+	sort.Strings(tags)
+
+	article := &so.Article[string]{
+		ID:          articleID,
+		ArticleType: d.Get("article_type").(string),
+		Body:        d.Get("body_markdown").(string),
+		Title:       d.Get("title").(string),
+		Tags:        tags,
 	}
 
 	_, err2 := client.UpdateArticle(article)

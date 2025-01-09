@@ -1,10 +1,10 @@
 package client
 
-type Question struct {
-	ID           int      `json:"question_id,omitempty"`
-	BodyMarkdown string   `json:"body_markdown"`
-	Preview      bool     `json:"preview"`
-	Title        string   `json:"title"`
-	Tags         []string `json:"tags"`
-	Filter       string   `json:"filter"`
+type Question[T string | Tag] struct {
+	ID           int    `json:"id,omitempty"`
+	Body         string `json:"body"`
+	BodyMarkdown string `json:"bodyMarkdown"`
+	Preview      bool   `json:"preview"`
+	Title        string `json:"title"`
+	Tags         []T    `json:"tags"`
 }

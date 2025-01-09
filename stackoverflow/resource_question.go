@@ -3,6 +3,7 @@ package stackoverflow
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 
 	so "terraform-provider-stackoverflow/stackoverflow/client"
@@ -23,14 +24,9 @@ func resourceQuestion() *schema.Resource {
 				Required:    true,
 				Description: "The question content in Markdown format",
 			},
-			"filter": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The API filter to use",
-			},
 			"tags": {
 				Type:     schema.TypeList,
-				Optional: true,
+				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -54,11 +50,13 @@ func resourceQuestionCreate(ctx context.Context, d *schema.ResourceData, meta in
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	question := &so.Question{
-		BodyMarkdown: d.Get("body_markdown").(string),
-		Title:        d.Get("title").(string),
-		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
-		Filter:       d.Get("filter").(string),
+	tags := convertToArray[string](d.Get("tags").([]interface{}))
+	sort.Strings(tags)
+
+	question := &so.Question[string]{
+		Body:  d.Get("body_markdown").(string),
+		Title: d.Get("title").(string),
+		Tags:  tags,
 	}
 
 	newQuestion, err := client.CreateQuestion(question)
@@ -78,27 +76,22 @@ func resourceQuestionRead(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	questionIDs := []int{questionID}
-	filter := d.Get("filter").(string)
-	questions, err := client.GetQuestions(&questionIDs, &filter)
+	question, err := client.GetQuestion(&questionID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if len(*questions) < 1 {
+	if question == nil {
 		return diag.FromErr(fmt.Errorf("no question found matching identifier %d", questionID))
 	}
 
-	if len(*questions) > 1 {
-		return diag.FromErr(fmt.Errorf("found %d questions matching identifier %d", len(*questions), questionID))
-	}
-
-	question := (*questions)[0]
+	tags := selectTagNamesToArray(question.Tags)
+	sort.Strings(tags)
 
 	d.SetId(strconv.Itoa(question.ID))
 	d.Set("body_markdown", question.BodyMarkdown)
 	d.Set("title", question.Title)
-	d.Set("tags", ignoreDefaultTags(client.DefaultTags, question.Tags, expandTagsToArray(d.Get("tags").([]interface{}))))
+	d.Set("tags", tags)
 
 	return diags
 }
@@ -114,12 +107,14 @@ func resourceQuestionUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(err)
 	}
 
-	question := &so.Question{
-		ID:           questionID,
-		BodyMarkdown: d.Get("body_markdown").(string),
-		Title:        d.Get("title").(string),
-		Tags:         mergeDefaultTagsWithResourceTags(client.DefaultTags, expandTagsToArray(d.Get("tags").([]interface{}))),
-		Filter:       d.Get("filter").(string),
+	tags := convertToArray[string](d.Get("tags").([]interface{}))
+	sort.Strings(tags)
+
+	question := &so.Question[string]{
+		ID:    questionID,
+		Body:  d.Get("body_markdown").(string),
+		Title: d.Get("title").(string),
+		Tags:  tags,
 	}
 
 	_, err2 := client.UpdateQuestion(question)

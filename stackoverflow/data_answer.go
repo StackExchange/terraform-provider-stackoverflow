@@ -20,10 +20,15 @@ func dataAnswer() *schema.Resource {
 				Required:    true,
 				Description: "The identifier for the answer",
 			},
-			"filter": {
+			"body_markdown": {
 				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The answer content in Markdown format",
+			},
+			"question_id": {
+				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "The API filter to use",
+				Description: "The identifier for the question",
 			},
 		},
 	}
@@ -35,29 +40,20 @@ func dataAnswerRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 	answerID := d.Get("answer_id").(int)
-	filter := d.Get("filter").(string)
-	answerIDs := []int{answerID}
+	questionID := d.Get("question_id").(int)
 
-	answers, err := c.GetAnswers(&answerIDs, &filter)
+	answer, err := c.GetAnswer(&questionID, &answerID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if len(*answers) < 1 {
+	if answer == nil {
 		return diag.FromErr(fmt.Errorf("no answer found matching identifier %d", answerID))
 	}
-
-	if len(*answers) > 1 {
-		return diag.FromErr(fmt.Errorf("found %d answers matching identifier %d", len(*answers), answerID))
-	}
-
-	answer := (*answers)[0]
 
 	d.SetId(strconv.Itoa(answer.ID))
 	d.Set("body_markdown", answer.BodyMarkdown)
 	d.Set("question_id", answer.QuestionID)
-	d.Set("title", answer.Title)
-	d.Set("tags", answer.Tags)
 
 	return diags
 }

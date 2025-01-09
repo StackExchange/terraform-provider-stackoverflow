@@ -2,76 +2,65 @@ package client
 
 import (
 	"fmt"
-	"log"
-	"net/url"
-	"strings"
 )
 
-func (c *Client) GetArticles(articleIDs *[]int, filter *string) (*[]Article, error) {
-	response, err := c.get("articles", articleIDs, filter)
+func (c *Client) GetArticle(articleID *int) (*Article[Tag], error) {
+	response, err := c.get(fmt.Sprintf("%s/%d", "articles", *articleID))
 	if err != nil {
 		return nil, err
 	}
 
-	articles, err := UnwrapResponseItems[Article](response)
+	article, err := ConvertFromJsonString[Article[Tag]](response)
 	if err != nil {
 		return nil, err
 	}
 
-	return articles, nil
+	return article, nil
 }
 
-func (c *Client) CreateArticle(article *Article) (*Article, error) {
-	response, err := c.create("articles/add", GenerateArticleFormData(article))
+func (c *Client) CreateArticle(article *Article[string]) (*Article[Tag], error) {
+	body, err := ConvertToJsonString(*article)
 	if err != nil {
 		return nil, err
 	}
 
-	articles, err := UnwrapResponseItems[Article](response)
+	response, err := c.create("articles", body)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(*articles) != 1 {
-		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(*articles))
+	newArticle, err := ConvertFromJsonString[Article[Tag]](response)
+	if err != nil {
+		return nil, err
 	}
 
-	newArticle := (*articles)[0]
-
-	return &newArticle, nil
+	return newArticle, nil
 }
 
-func (c *Client) UpdateArticle(article *Article) (*Article, error) {
-	response, err := c.update(fmt.Sprintf("%s%d%s", "articles/", article.ID, "/edit"), GenerateArticleFormData(article))
+func (c *Client) UpdateArticle(article *Article[string]) (*Article[Tag], error) {
+	body, err := ConvertToJsonString(*article)
 	if err != nil {
 		return nil, err
 	}
 
-	articles, err := UnwrapResponseItems[Article](response)
+	response, err := c.update(fmt.Sprintf("%s/%d", "articles", (*article).ID), body)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(*articles) != 1 {
-		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(*articles))
+	newArticle, err := ConvertFromJsonString[Article[Tag]](response)
+	if err != nil {
+		return nil, err
 	}
 
-	newArticle := (*articles)[0]
-
-	return &newArticle, nil
+	return newArticle, nil
 }
 
 func (c *Client) DeleteArticle(articleId int) error {
-	err := c.delete(fmt.Sprintf("%s%d%s", "articles/", articleId, "/delete"))
+	err := c.delete(fmt.Sprintf("%s/%d", "articles", articleId))
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func GenerateArticleFormData(article *Article) *string {
-	formData := fmt.Sprintf("title=%s&body=%s&tags=%s&article_type=%s&filter=%s", url.QueryEscape(article.Title), url.QueryEscape(article.BodyMarkdown), strings.Join(article.Tags, ","), article.ArticleType, article.Filter)
-	log.Printf("Form data: %s", formData)
-	return &formData
 }

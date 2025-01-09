@@ -11,44 +11,42 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestStackOverflowArticle(t *testing.T) {
+func TestStackOverflowCollection(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testStackOverflowArticleConfig(),
+				Config: testStackOverflowCollectionConfig(),
 				Check: resource.ComposeTestCheckFunc(
-					testStackOverflowArticleExists("stackoverflow_article.test"),
+					testStackOverflowArticleExists("stackoverflow_collection.test"),
 				),
 			},
 		},
 	})
 }
 
-func testStackOverflowArticleConfig() string {
-	return `resource "stackoverflow_article" "test" {
-		article_type = "knowledgeArticle"
+func testStackOverflowCollectionConfig() string {
+	return `resource "stackoverflow_collection" "test" {
 		title = "unit test"
-		body_markdown = "unit test"
-		tags = ["unit-test"]
+		description = "unit test"
 	}`
 }
 
-func testStackOverflowArticleDestroy(s *terraform.State) error {
+func testStackOverflowCollectionDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*so.Client)
 
 	for _, resource := range s.RootModule().Resources {
-		if resource.Type != "stackoverflow_article" {
+		if resource.Type != "stackoverflow_collection" {
 			continue
 		}
 
-		articleID, err := strconv.Atoi(resource.Primary.ID)
+		collectionID, err := strconv.Atoi(resource.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		err = c.DeleteArticle(articleID)
+		err = c.DeleteCollection(collectionID)
 		if err != nil {
 			return err
 		}
@@ -57,7 +55,7 @@ func testStackOverflowArticleDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testStackOverflowArticleExists(n string) resource.TestCheckFunc {
+func testStackOverflowCollectionExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resource, ok := s.RootModule().Resources[n]
 
