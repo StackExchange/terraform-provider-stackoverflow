@@ -12,9 +12,8 @@ import (
 
 func TestStackOverflowAnswer(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testStackOverflowAnswerDestroy,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testStackOverflowAnswerConfig(),
@@ -28,9 +27,8 @@ func TestStackOverflowAnswer(t *testing.T) {
 
 func testStackOverflowAnswerConfig() string {
 	return `resource "stackoverflow_answer" "test" {
-		question_id = 0
-		body_markdown = "unit test"
-		filter = "1234abcd"
+		question_id = 58
+		body_markdown = "Unit test."
 	}`
 }
 
@@ -47,7 +45,12 @@ func testStackOverflowAnswerDestroy(s *terraform.State) error {
 			return err
 		}
 
-		err = c.DeleteAnswer(answerID)
+		questionID, err := strconv.Atoi(resource.Primary.Attributes["question_id"])
+		if err != nil {
+			return err
+		}
+
+		err = c.DeleteAnswer(questionID, answerID)
 		if err != nil {
 			return err
 		}

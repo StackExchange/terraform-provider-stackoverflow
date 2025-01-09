@@ -32,7 +32,7 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatalf("STACK_OVERFLOW_ACCESS_TOKEN must be set for acceptance tests")
 	}
 
-	if err := os.Getenv("STACK_OVERFLOW_TEAM"); err == "" {
-		t.Fatalf("STACK_OVERFLOW_TEAM must be set for acceptance tests")
+	if err := os.Getenv("STACK_OVERFLOW_API_URL"); err == "" {
+		t.Fatalf("STACK_OVERFLOW_API_URL must be set for acceptance tests")
 	}
 }

@@ -15,15 +15,28 @@ func dataQuestion() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataQuestionRead,
 		Schema: map[string]*schema.Schema{
-			"filter": {
+			"body_markdown": {
 				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The API filter to use",
+				Computed:    true,
+				Description: "The question content in Markdown format",
+			},
+			"tags": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Description: "The set of tags to be associated with the article",
 			},
 			"question_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "The identifier for the question",
+			},
+			"title": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The title of the article",
 			},
 		},
 	}
@@ -36,28 +49,20 @@ func dataQuestionRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	var diags diag.Diagnostics
 
 	questionID := d.Get("question_id").(int)
-	filter := d.Get("filter").(string)
-	questionIDs := []int{questionID}
 
-	questions, err := c.GetQuestions(&questionIDs, &filter)
+	question, err := c.GetQuestion(&questionID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if len(*questions) < 1 {
+	if question == nil {
 		return diag.FromErr(fmt.Errorf("no question found matching identifier %d", questionID))
 	}
-
-	if len(*questions) > 1 {
-		return diag.FromErr(fmt.Errorf("found %d questions matching identifier %d", len(*questions), questionID))
-	}
-
-	question := (*questions)[0]
 
 	d.SetId(strconv.Itoa(question.ID))
 	d.Set("body_markdown", question.BodyMarkdown)
 	d.Set("title", question.Title)
-	d.Set("tags", question.Tags)
+	d.Set("tags", selectTagNamesToArray(question.Tags))
 
 	return diags
 }

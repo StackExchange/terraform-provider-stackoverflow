@@ -1,13 +1,37 @@
 package stackoverflow
 
-func expandTagsToArray(tags []interface{}) []string {
+import (
+	so "terraform-provider-stackoverflow/stackoverflow/client"
+)
+
+func selectTagNamesToArray(tags []so.Tag) []string {
 	tagCollection := make([]string, len(tags))
 
 	for i, tag := range tags {
-		tagCollection[i] = tag.(string)
+		tagCollection[i] = tag.Name
 	}
 
 	return tagCollection
+}
+
+func selectCollectionContentIdsToArray(content []so.CollectionContent) []int {
+	contentCollection := make([]int, len(content))
+
+	for i, item := range content {
+		contentCollection[i] = item.ID
+	}
+
+	return contentCollection
+}
+
+func convertToArray[T any](items []interface{}) []T {
+	collection := make([]T, len(items))
+
+	for i, item := range items {
+		collection[i] = item.(T)
+	}
+
+	return collection
 }
 
 func mergeDefaultTagsWithResourceTags(defaultTags []string, tags []string) []string {

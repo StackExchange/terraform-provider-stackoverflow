@@ -23,11 +23,6 @@ func resourceAnswer() *schema.Resource {
 				Required:    true,
 				Description: "The answer content in Markdown format",
 			},
-			"filter": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The API filter to use",
-			},
 			"question_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
@@ -46,10 +41,9 @@ func resourceAnswerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	answer := &so.Answer{
-		BodyMarkdown: d.Get("body_markdown").(string),
-		QuestionID:   d.Get("question_id").(int),
-		Filter:       d.Get("filter").(string),
+	answer := &so.Answer[string]{
+		Body:       d.Get("body_markdown").(string),
+		QuestionID: d.Get("question_id").(int),
 	}
 
 	newAnswer, err := client.CreateAnswer(answer)
@@ -66,25 +60,20 @@ func resourceAnswerRead(ctx context.Context, d *schema.ResourceData, meta interf
 	client := meta.(*so.Client)
 	var diags diag.Diagnostics
 	answerID, err := strconv.Atoi(d.Id())
-	filter := d.Get("filter").(string)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	answerIDs := []int{answerID}
-	answers, err := client.GetAnswers(&answerIDs, &filter)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if len(*answers) < 1 {
+	questionID := d.Get("question_id").(int)
+
+	answer, err := client.GetAnswer(&questionID, &answerID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if answer == nil {
 		return diag.FromErr(fmt.Errorf("no answer found matching identifier %d", answerID))
 	}
-
-	if len(*answers) > 1 {
-		return diag.FromErr(fmt.Errorf("found %d answers matching identifier %d", len(*answers), answerID))
-	}
-
-	answer := (*answers)[0]
 
 	d.SetId(strconv.Itoa(answer.ID))
 	d.Set("body_markdown", answer.BodyMarkdown)
@@ -104,11 +93,10 @@ func resourceAnswerUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	answer := &so.Answer{
-		ID:           answerID,
-		BodyMarkdown: d.Get("body_markdown").(string),
-		QuestionID:   d.Get("question_id").(int),
-		Filter:       d.Get("filter").(string),
+	answer := &so.Answer[string]{
+		ID:         answerID,
+		Body:       d.Get("body_markdown").(string),
+		QuestionID: d.Get("question_id").(int),
 	}
 
 	_, err2 := client.UpdateAnswer(answer)
@@ -130,7 +118,9 @@ func resourceAnswerDelete(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	err2 := client.DeleteAnswer(answerID)
+	questionID := d.Get("question_id").(int)
+
+	err2 := client.DeleteAnswer(questionID, answerID)
 
 	if err2 != nil {
 		return diag.FromErr(err2)

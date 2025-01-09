@@ -13,17 +13,19 @@ Manages an answer and associates it to the related question.
 ## Example
 
 ```
+data "stackoverflow_tag" "tag" {
+    tag_id = 1
+}
+
 resource "stackoverflow_question" "question" {
     title = "Stack Overflow Terraform Provider"
     body_markdown = "What is the Terraform Provider for Stack Overflow?"
-    tags = ["example"]
-    filter = "XXXX"
+    tags = [data.stackoverflow_tag.tag.name]
 }
 
 resource "stackoverflow_answer" "answer" {
     question_id = stackoverflow_question.question.id
     body_markdown = "It is a Terraform plugin provider to manage resources in Stack Overflow for Teams"
-    filter = "XXXX"
 }
 ```
 
@@ -33,7 +35,6 @@ resource "stackoverflow_answer" "answer" {
 ### Required
 
 - `body_markdown` (String) The answer content in Markdown format
-- `filter` (String) The API filter to use
 - `question_id` (Number) The question identifier that this answer applies to
 
 ### Read-Only

@@ -8,16 +8,19 @@ description: |-
 
 # stackoverflow_question (Resource)
 
-Manages a question. At least one tag is required which can be either be set as a default tag on the provider or set at the resource level.
+Manages a question.
 
 ## Example
 
 ```
+data "stackoverflow_tag" "tag" {
+    tag_id = 1
+}
+
 resource "stackoverflow_question" "question" {
     title = "Stack Overflow Terraform Provider"
     body_markdown = "What is the Terraform Provider for Stack Overflow?"
-    tags = ["example"]
-    filter = stackoverflow_filter.filter.id
+    tags = [data.stackoverflow_tag.tag.name]
 }
 ```
 
@@ -27,12 +30,8 @@ resource "stackoverflow_question" "question" {
 ### Required
 
 - `body_markdown` (String) The question content in Markdown format
-- `filter` (String) The API filter to use
-- `title` (String) The title of the article
-
-### Optional
-
 - `tags` (List of String) The set of tags to be associated with the article
+- `title` (String) The title of the article
 
 ### Read-Only
 

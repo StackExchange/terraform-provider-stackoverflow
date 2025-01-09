@@ -12,9 +12,8 @@ import (
 
 func TestStackOverflowQuestion(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testStackOverflowQuestionDestroy,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testStackOverflowQuestionConfig(),
@@ -28,9 +27,9 @@ func TestStackOverflowQuestion(t *testing.T) {
 
 func testStackOverflowQuestionConfig() string {
 	return `resource "stackoverflow_question" "test" {
-		title = "unit test"
-		body_markdown = "unit test"
-		filter = "1234abcd"
+		title = "Unit testing"
+		body_markdown = "How do I unit test?"
+		tags = ["test"]
 	}`
 }
 

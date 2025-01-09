@@ -15,7 +15,6 @@ The `answer` data source allows for referencing an existing answer in Stack Over
 ```
 data "stackoverflow_answer" "answer" {
     answer_id = 1
-    filter = "XXXX"
 }
 ```
 
@@ -25,10 +24,11 @@ data "stackoverflow_answer" "answer" {
 ### Required
 
 - `answer_id` (Number) The identifier for the answer
-- `filter` (String) The API filter to use
+- `question_id` (Number) The identifier for the question
 
 ### Read-Only
 
+- `body_markdown` (String) The answer content in Markdown format
 - `id` (String) The ID of this resource.
 
 

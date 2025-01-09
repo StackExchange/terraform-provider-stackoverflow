@@ -2,81 +2,65 @@ package client
 
 import (
 	"fmt"
-	"log"
-	"net/url"
 )
 
-func (c *Client) GetAnswers(answerIDs *[]int, filter *string) (*[]Answer, error) {
-	response, err := c.get("answers", answerIDs, filter)
+func (c *Client) GetAnswer(questionID *int, answerID *int) (*Answer[Tag], error) {
+	response, err := c.get(fmt.Sprintf("%s/%d/%s/%d", "questions", *questionID, "answers", *answerID))
 	if err != nil {
 		return nil, err
 	}
 
-	answers, err := UnwrapResponseItems[Answer](response)
+	answer, err := ConvertFromJsonString[Answer[Tag]](response)
 	if err != nil {
 		return nil, err
 	}
 
-	return answers, nil
+	return answer, nil
 }
 
-func (c *Client) CreateAnswer(answer *Answer) (*Answer, error) {
-	response, err := c.create(fmt.Sprintf("%s%d%s", "questions/", answer.QuestionID, "/answers/add"), GenerateAnswerFormData(answer, true))
+func (c *Client) CreateAnswer(answer *Answer[string]) (*Answer[Tag], error) {
+	body, err := ConvertToJsonString(*answer)
 	if err != nil {
 		return nil, err
 	}
 
-	answers, err := UnwrapResponseItems[Answer](response)
+	response, err := c.create(fmt.Sprintf("%s/%d/%s", "questions", (*answer).QuestionID, "answers"), body)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(*answers) != 1 {
-		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(*answers))
+	newAnswer, err := ConvertFromJsonString[Answer[Tag]](response)
+	if err != nil {
+		return nil, err
 	}
 
-	newAnswer := (*answers)[0]
-
-	return &newAnswer, nil
+	return newAnswer, nil
 }
 
-func (c *Client) UpdateAnswer(answer *Answer) (*Answer, error) {
-	response, err := c.update(fmt.Sprintf("%s%d%s", "answers/", answer.ID, "/edit"), GenerateAnswerFormData(answer, false))
+func (c *Client) UpdateAnswer(answer *Answer[string]) (*Answer[Tag], error) {
+	body, err := ConvertToJsonString(*answer)
 	if err != nil {
 		return nil, err
 	}
 
-	answers, err := UnwrapResponseItems[Answer](response)
+	response, err := c.update(fmt.Sprintf("%s/%d/%s/%d", "questions", answer.QuestionID, "answers", (*answer).ID), body)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(*answers) != 1 {
-		return nil, fmt.Errorf("response wrapper does not contain expected number of items (1); item length is %d", len(*answers))
+	newAnswer, err := ConvertFromJsonString[Answer[Tag]](response)
+	if err != nil {
+		return nil, err
 	}
 
-	newAnswer := (*answers)[0]
-
-	return &newAnswer, nil
+	return newAnswer, nil
 }
 
-func (c *Client) DeleteAnswer(answerId int) error {
-	err := c.delete(fmt.Sprintf("%s%d%s", "answers/", answerId, "/delete"))
+func (c *Client) DeleteAnswer(questionId int, answerId int) error {
+	err := c.delete(fmt.Sprintf("%s/%d/%s/%d", "questions", questionId, "answers", answerId))
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func GenerateAnswerFormData(answer *Answer, isCreate bool) *string {
-	formData := ""
-	if isCreate {
-		formData = fmt.Sprintf("id=%d&body=%s&preview=%t&filter=%s", answer.QuestionID, url.QueryEscape(answer.BodyMarkdown), answer.Preview, answer.Filter)
-	} else {
-		formData = fmt.Sprintf("id=%d&body=%s&preview=%t&filter=%s", answer.ID, url.QueryEscape(answer.BodyMarkdown), answer.Preview, answer.Filter)
-	}
-
-	log.Printf("Form data: %s", formData)
-	return &formData
 }
