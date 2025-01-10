@@ -49,7 +49,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 
 	var diags diag.Diagnostics
 	client := so.NewClient(&baseURL, &accessToken)
-	client.DefaultTags = convertToArray[string](d.Get("default_tags").([]interface{}))
 
 	return client, diags
 }
