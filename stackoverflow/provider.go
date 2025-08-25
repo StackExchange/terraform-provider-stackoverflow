@@ -2,16 +2,23 @@ package stackoverflow
 
 import (
 	"context"
+	"log"
 
 	so "terraform-provider-stackoverflow/stackoverflow/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	version "terraform-provider-stackoverflow/version"
 )
+
+// TerraformProviderProductUserAgent is included in the User-Agent header for
+// any API requests made by the provider.
+const TerraformProviderProductUserAgent = "terraform-provider-stackoverflow"
 
 // Provider -
 func Provider() *schema.Provider {
-	return &schema.Provider{
+	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"access_token": {
 				Type:        schema.TypeString,
@@ -39,16 +46,21 @@ func Provider() *schema.Provider {
 			"stackoverflow_question":   dataQuestion(),
 			"stackoverflow_tag":        dataTag(),
 		},
-		ConfigureContextFunc: providerConfigure,
 	}
-}
 
-func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	accessToken := d.Get("access_token").(string)
-	baseURL := d.Get("base_url").(string)
+	provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		accessToken := d.Get("access_token").(string)
+		baseURL := d.Get("base_url").(string)
+		userAgentHeader := provider.UserAgent(TerraformProviderProductUserAgent, version.ProviderVersion)
 
-	var diags diag.Diagnostics
-	client := so.NewClient(&baseURL, &accessToken)
+		var diags diag.Diagnostics
 
-	return client, diags
+		client := so.NewClient(&baseURL, &accessToken, &userAgentHeader)
+
+		log.Printf("User-Agent: %s", client.UserAgentHeader)
+
+		return client, diags
+	}
+
+	return provider
 }
