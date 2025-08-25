@@ -3,7 +3,9 @@ package stackoverflow
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
+	"strings"
 
 	so "terraform-provider-stackoverflow/stackoverflow/client"
 
@@ -59,12 +61,38 @@ func resourceAnswerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 func resourceAnswerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*so.Client)
 	var diags diag.Diagnostics
-	answerID, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
-	questionID := d.Get("question_id").(int)
+	answerID := 0
+	questionID := 0
+	err := error(nil)
+
+	// Check if the data matches an expression like 10/11 (question id/answer id)
+	// this is used to support importing answers where the question id is required
+	// but cannot be supplied because the identifier naturally does not contain the question
+	// identifier as a logical component
+	pattern := regexp.MustCompile(`[0-9]+/[0-9]+`)
+
+	if pattern.MatchString(d.Id()) {
+		parts := strings.Split(d.Id(), "/")
+		if len(parts) == 2 {
+			questionID, err = strconv.Atoi(parts[0])
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			answerID, err = strconv.Atoi(parts[1])
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	} else {
+		answerID, err = strconv.Atoi(d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		questionID = d.Get("question_id").(int)
+	}
 
 	answer, err := client.GetAnswer(&questionID, &answerID)
 	if err != nil {
