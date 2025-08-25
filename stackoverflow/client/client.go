@@ -11,17 +11,19 @@ import (
 )
 
 type Client struct {
-	BaseURL     string
-	TeamName    string
-	AccessToken string
-	HTTPClient  *http.Client
-	DefaultTags []string
+	BaseURL         string
+	TeamName        string
+	AccessToken     string
+	UserAgentHeader string
+	HTTPClient      *http.Client
+	DefaultTags     []string
 }
 
-func NewClient(baseURL *string, accessToken *string) *Client {
+func NewClient(baseURL *string, accessToken *string, userAgentHeader *string) *Client {
 	c := Client{
-		BaseURL:     *baseURL,
-		AccessToken: *accessToken,
+		BaseURL:         *baseURL,
+		AccessToken:     *accessToken,
+		UserAgentHeader: *userAgentHeader,
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
@@ -36,6 +38,7 @@ func (c *Client) doRequest(req *http.Request, successCode int) ([]byte, error) {
 	req.Header.Set("Authorization", authzHeader)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", c.UserAgentHeader)
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
