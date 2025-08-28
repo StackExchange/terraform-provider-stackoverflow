@@ -6,4 +6,5 @@ type Collection struct {
 	ContentIds  []int               `json:"contentIds"`
 	Description string              `json:"description"`
 	Title       string              `json:"title"`
+	IsDeleted   bool                `json:"isDeleted"`
 }

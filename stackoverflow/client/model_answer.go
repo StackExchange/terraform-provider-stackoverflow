@@ -9,4 +9,5 @@ type Answer[T string | Tag] struct {
 	QuestionID   int    `json:"questionId"`
 	Title        string `json:"title"`
 	Tags         []T    `json:"tags"`
+	IsDeleted    bool   `json:"isDeleted"`
 }

@@ -7,4 +7,5 @@ type Article[T string | Tag] struct {
 	BodyMarkdown string `json:"bodyMarkdown"`
 	Title        string `json:"title"`
 	Tags         []T    `json:"tags"`
+	IsDeleted    bool   `json:"isDeleted"`
 }
