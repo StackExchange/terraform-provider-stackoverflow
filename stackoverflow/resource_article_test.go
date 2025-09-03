@@ -11,53 +11,87 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestStackOverflowArticle(t *testing.T) {
+func TestAccStackOverflowArticle(t *testing.T) {
+	resourceType := "stackoverflow_article"
+	resourceName := "test"
+	resourceIdentifier := fmt.Sprintf("%s.%s", resourceType, resourceName)
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccStackOverflowArticleCheckDestroy(resourceIdentifier),
 		Steps: []resource.TestStep{
 			{
-				Config: testStackOverflowArticleConfig(),
+				Config: testAccStackOverflowArticleConfig(resourceType, resourceName, ""),
 				Check: resource.ComposeTestCheckFunc(
-					testStackOverflowArticleExists("stackoverflow_article.test"),
+					testAccStackOverflowArticleCheckExists(resourceIdentifier),
 				),
+			},
+			{
+				Config: testAccStackOverflowArticleConfig(resourceType, resourceName, " Updated"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccStackOverflowArticleCheckExists(resourceIdentifier),
+				),
+			},
+			{
+				ResourceName: resourceIdentifier,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					resourceState, found := s.RootModule().Resources[resourceIdentifier]
+					if !found {
+						return "", fmt.Errorf("Resource not found: %s", resourceIdentifier)
+					}
+					return fmt.Sprintf(resourceState.Primary.ID), nil
+				},
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func testStackOverflowArticleConfig() string {
-	return `resource "stackoverflow_article" "test" {
+func testAccStackOverflowArticleConfig(resourceType, resourceName, update string) string {
+	return fmt.Sprintf(`resource "%s" "%s" {
 		article_type = "knowledgeArticle"
-		title = "unit test"
-		body_markdown = "unit test"
+		title = "unit test%s"
+		body_markdown = "unit test%s"
 		tags = ["unit-test"]
-	}`
+	}`, resourceType, resourceName, update, update)
 }
 
-func testStackOverflowArticleDestroy(s *terraform.State) error {
-	c := testAccProvider.Meta().(*so.Client)
+func testAccStackOverflowArticleCheckDestroy(resourceIdentifier string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resourceState, found := s.RootModule().Resources[resourceIdentifier]
 
-	for _, resource := range s.RootModule().Resources {
-		if resource.Type != "stackoverflow_article" {
-			continue
+		if !found {
+			return fmt.Errorf("No resource found with id %s", resourceIdentifier)
 		}
 
-		articleID, err := strconv.Atoi(resource.Primary.ID)
+		if resourceState.Primary.ID == "" {
+			return fmt.Errorf("Resource with ID is empty for %s", resourceIdentifier)
+		}
+
+		articleID, err := strconv.Atoi(resourceState.Primary.ID)
+
 		if err != nil {
 			return err
 		}
 
-		err = c.DeleteArticle(articleID)
+		c := testAccProvider.Meta().(*so.Client)
+		article, err := c.GetArticle(&articleID)
+
 		if err != nil {
 			return err
 		}
+
+		if article != nil && !article.IsDeleted {
+			return fmt.Errorf("Article with ID %d still exists", articleID)
+		}
+
+		return nil
 	}
-
-	return nil
 }
 
-func testStackOverflowArticleExists(n string) resource.TestCheckFunc {
+func testAccStackOverflowArticleCheckExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resource, ok := s.RootModule().Resources[n]
 

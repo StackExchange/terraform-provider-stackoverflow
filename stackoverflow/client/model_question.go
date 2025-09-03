@@ -7,4 +7,5 @@ type Question[T string | Tag] struct {
 	Preview      bool   `json:"preview"`
 	Title        string `json:"title"`
 	Tags         []T    `json:"tags"`
+	IsDeleted    bool   `json:"isDeleted"`
 }

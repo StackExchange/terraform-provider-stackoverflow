@@ -1,0 +1,43 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches:
+    - "*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+    - name: Unshallow
+      run: git fetch --prune --unshallow
+    - name: Setup Go
+      uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+    - id: terraform_version
+      name: Terraform Version
+      run: ./build/scripts/Get-TerraformVersion.ps1
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ steps.terraform_version.outputs.value }}
+    - name: Run Acceptance Tests
+      run: |
+        $env:TF_ACC = 1
+        go test -v ./...
+      env:
+        STACK_OVERFLOW_ACCESS_TOKEN: ${{ secrets.STACK_OVERFLOW_ACCESS_TOKEN }}
+        STACK_OVERFLOW_API_URL: ${{ secrets.STACK_OVERFLOW_API_URL }}
