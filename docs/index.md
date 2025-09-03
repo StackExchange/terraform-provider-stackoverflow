@@ -98,3 +98,4 @@ The migration steps should be as follows:
 1. Remove all usage of the `filter` field from resources
 1. Remove usage of the `default_tags` field from the provider (users may opt to use a local variable with default tags and then subsequently merge that list with each resource's tag values)
 1. Remove usage of the `team_name` field from the provider.  Users should set the `base_url` field or set the `STACK_OVERFLOW_API_URL` environment variable instead.  For example, if the previous configuration only set the `team_name` field to the value `myteam`, the `base_url` field should now be set to `https://api.stackoverflowteams.com/v3/teams/myteam/`
+1. Update all `stackoveflow_article` `article_type` fields to one of the following: [`knowledgeArticle`, `announcement`, `policy`, `howToGuide`]
