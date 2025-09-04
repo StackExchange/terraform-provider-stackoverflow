@@ -8,9 +8,9 @@ import (
 
 	so "terraform-provider-stackoverflow/stackoverflow/client"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceArticle() *schema.Resource {
@@ -24,7 +24,7 @@ func resourceArticle() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "The type of article. Must be one of `knowledgeArticle`, `announcement`, `howToGuide`, `policy`",
-				ValidateFunc: schema.SchemaValidateFunc(validation.StringInSlice([]string{"knowledgeArticle", "announcement", "howToGuide", "policy"}, false)),
+				ValidateFunc: validation.StringInSlice([]string{"knowledgeArticle", "announcement", "howToGuide", "policy"}, false),
 			},
 			"body_markdown": {
 				Type:        schema.TypeString,

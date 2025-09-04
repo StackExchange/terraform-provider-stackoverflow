@@ -2,6 +2,7 @@ package stackoverflow
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"testing"
 
@@ -22,13 +23,17 @@ func TestAccStackOverflowArticle(t *testing.T) {
 		CheckDestroy: testAccStackOverflowArticleCheckDestroy(resourceIdentifier),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccStackOverflowArticleConfig(resourceType, resourceName, ""),
+				Config: testAccStackOverflowArticleConfig(resourceType, resourceName, "knowledgeArticle", ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccStackOverflowArticleCheckExists(resourceIdentifier),
 				),
 			},
 			{
-				Config: testAccStackOverflowArticleConfig(resourceType, resourceName, " Updated"),
+				Config:      testAccStackOverflowArticleConfig(resourceType, resourceName, "error", ""),
+				ExpectError: regexp.MustCompile("expected article_type to be one of"),
+			},
+			{
+				Config: testAccStackOverflowArticleConfig(resourceType, resourceName, "knowledgeArticle", " Updated"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccStackOverflowArticleCheckExists(resourceIdentifier),
 				),
@@ -49,13 +54,13 @@ func TestAccStackOverflowArticle(t *testing.T) {
 	})
 }
 
-func testAccStackOverflowArticleConfig(resourceType, resourceName, update string) string {
+func testAccStackOverflowArticleConfig(resourceType, resourceName, articleType, update string) string {
 	return fmt.Sprintf(`resource "%s" "%s" {
-		article_type = "knowledgeArticle"
+		article_type = "%s"
 		title = "unit test%s"
 		body_markdown = "unit test%s"
 		tags = ["unit-test"]
-	}`, resourceType, resourceName, update, update)
+	}`, resourceType, resourceName, articleType, update, update)
 }
 
 func testAccStackOverflowArticleCheckDestroy(resourceIdentifier string) resource.TestCheckFunc {
