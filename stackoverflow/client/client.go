@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -54,6 +55,34 @@ func (c *Client) doRequest(req *http.Request, successCode int) ([]byte, error) {
 	return body, err
 }
 
+func (c *Client) doImageRequest(req *http.Request, successCode int) ([]byte, error) {
+	authzHeader := fmt.Sprintf("Bearer %s", c.AccessToken)
+	req.Header.Set("Authorization", authzHeader)
+
+	if req.Method == "GET" {
+		req.Header.Set("Accept", "image/png")
+	} else {
+		req.Header.Set("Accept", "application/json")
+
+		http.DetectContentType(req.Body.Read())
+		req.Header.Set("Content-Type", "image/???")
+	}
+	req.Header.Set("User-Agent", c.UserAgentHeader)
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if res.StatusCode != successCode {
+		return nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
+	}
+
+	return body, err
+}
+
 func (c *Client) get(route string) (*[]byte, error) {
 	url := fmt.Sprintf("%s%s", c.BaseURL, route)
 	log.Print(url)
@@ -78,6 +107,31 @@ func (c *Client) create(route string, body *string) (*[]byte, error) {
 	url := fmt.Sprintf("%s%s", c.BaseURL, route)
 	log.Print(url)
 	req, err := http.NewRequest("POST", url, strings.NewReader(*body))
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.doRequest(req, http.StatusCreated)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := new(strings.Builder)
+	io.Copy(buf, strings.NewReader((string(response))))
+	log.Printf("Response body: %s", buf.String())
+
+	return &response, nil
+}
+
+func (c *Client) createImage(route string, image *string) (*[]byte, error) {
+	url := fmt.Sprintf("%s%s", c.BaseURL, route)
+	log.Print(url)
+	imageData, err := base64.StdEncoding.DecodeString(*image)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, buffer.NewBuffer(imageData))
 	if err != nil {
 		return nil, err
 	}
